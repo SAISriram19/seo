@@ -12,7 +12,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/api/research",
+        "url": "={{ $json.api_base_url || 'https://your-api-domain.com' }}/api/research",
         "authentication": "none",
         "requestFormat": "json",
         "bodyParameters": {
@@ -210,7 +210,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/api/batch-research",
+        "url": "={{ $json.api_base_url || 'https://your-api-domain.com' }}/api/batch-research",
         "authentication": "none",
         "requestFormat": "json",
         "bodyParameters": {

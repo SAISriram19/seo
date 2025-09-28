@@ -171,9 +171,10 @@ seo-keyword-agent/
 ├── seo_agent_pro.py          # Main AI agent implementation
 ├── web_server.py             # FastAPI web server
 ├── requirements.txt          # Python dependencies
-├── .env                      # Environment variables (create this)
+├── .env.example             # Environment variables template
 ├── test_demo.py             # Test suite
 ├── n8n-workflow.json        # N8N automation workflow
+├── N8N_WORKFLOW_SETUP.md    # N8N deployment guide
 ├── README.md                # This file
 ├── INSTALLATION.md          # Detailed installation guide
 ├── API_DOCUMENTATION.md     # Complete API reference
@@ -232,6 +233,26 @@ The system includes comprehensive error handling:
 3. Commit your changes (`git commit -am 'Add new feature'`)
 4. Push to the branch (`git push origin feature/improvement`)
 5. Create a Pull Request
+
+## N8N Workflow Deployment
+
+The included N8N workflow provides enterprise automation capabilities:
+
+### Quick Setup
+1. **Import Workflow**: Use `n8n-workflow.json` in your N8N instance
+2. **Configure URLs**: Set your API endpoint (not localhost for production)
+3. **Add Credentials**: Configure email, Slack, and Google Sheets
+4. **Test**: Run a sample workflow
+
+### Production Deployment
+For production use, deploy the API to a cloud platform:
+
+- **Heroku**: `https://your-app.herokuapp.com`
+- **Vercel**: `https://your-app.vercel.app`
+- **Railway**: `https://your-app.railway.app`
+- **DigitalOcean**: `https://your-app.ondigitalocean.app`
+
+See `N8N_WORKFLOW_SETUP.md` for complete deployment guide with security considerations, authentication setup, and troubleshooting.
 
 ## License
 
