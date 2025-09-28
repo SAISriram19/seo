@@ -1,0 +1,427 @@
+{
+  "name": "SEO Keyword Research Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b8c77f6e-3e0b-4b5c-9f0a-1234567890ab",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/research",
+        "authentication": "none",
+        "requestFormat": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "seed_keyword",
+              "value": "={{ $json.seed_keyword || 'digital marketing' }}"
+            },
+            {
+              "name": "max_keywords",
+              "value": "={{ $json.max_keywords || 50 }}"
+            },
+            {
+              "name": "country",
+              "value": "={{ $json.country || 'US' }}"
+            },
+            {
+              "name": "include_questions",
+              "value": "={{ $json.include_questions !== false }}"
+            },
+            {
+              "name": "include_long_tail",
+              "value": "={{ $json.include_long_tail !== false }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c9d88g7f-4f1c-5c6d-a01b-234567890bcd",
+      "name": "SEO Keyword Research API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "12345678-90ab-cdef-1234-567890abcdef",
+              "leftValue": "={{ $json.total_keywords }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d0e99h8g-5g2d-6d7e-b12c-345678901cde",
+      "name": "Check Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "options": {}
+      },
+      "id": "e1f00i9h-6h3e-7e8f-c23d-456789012def",
+      "name": "Convert to CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "subject": "SEO Keyword Research Results - {{ $json.seed_keyword }}",
+        "emailFormat": "html",
+        "message": "=<h2>SEO Keyword Research Complete</h2>\n<p><strong>Seed Keyword:</strong> {{ $json.seed_keyword }}</p>\n<p><strong>Total Keywords Found:</strong> {{ $json.total_keywords }}</p>\n<p><strong>Processing Time:</strong> {{ $json.processing_time }}s</p>\n<p><strong>Country:</strong> {{ $json.country }}</p>\n\n<h3>Top 10 Keywords:</h3>\n<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">\n<tr style=\"background-color: #f2f2f2;\">\n  <th style=\"padding: 8px;\">Keyword</th>\n  <th style=\"padding: 8px;\">Opportunity Score</th>\n  <th style=\"padding: 8px;\">Search Volume</th>\n  <th style=\"padding: 8px;\">Competition</th>\n  <th style=\"padding: 8px;\">Intent</th>\n</tr>\n{{ $json.keywords.slice(0, 10).map(k => `<tr>\n  <td style=\"padding: 8px;\">${k.keyword}</td>\n  <td style=\"padding: 8px;\">${k.opportunity_score}</td>\n  <td style=\"padding: 8px;\">${k.search_volume.toLocaleString()}</td>\n  <td style=\"padding: 8px;\">${k.competition_score}</td>\n  <td style=\"padding: 8px;\">${k.intent}</td>\n</tr>`).join('') }}\n</table>\n\n<p>Complete results are attached as CSV.</p>",
+        "options": {},
+        "attachments": "={{ $binary }}"
+      },
+      "id": "f2g11j0i-7i4f-8f9g-d34e-567890123efg",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ab123456-78cd-90ef-1234-56789abcdef0",
+              "name": "csv_data",
+              "value": "=Keyword,Opportunity Score,Search Volume,Competition Score,Difficulty,Intent,CPC Estimate,Ranking Probability\n{{ $json.keywords.map(k => `${k.keyword},${k.opportunity_score},${k.search_volume},${k.competition_score},${k.difficulty},${k.intent},${k.cpc_estimate},${k.ranking_probability}`).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "g3h22k1j-8j5g-9g0h-e45f-678901234fgh",
+      "name": "Prepare CSV Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [900, 120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "authentication": "none",
+        "requestFormat": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=SEO Keyword Research Complete!\n*Seed Keyword:* {{ $json.seed_keyword }}\n*Keywords Found:* {{ $json.total_keywords }}\n*Processing Time:* {{ $json.processing_time }}s\n*Top Opportunity:* {{ $json.keywords[0].keyword }} (Score: {{ $json.keywords[0].opportunity_score }})"
+            },
+            {
+              "name": "channel",
+              "value": "#seo-research"
+            },
+            {
+              "name": "username",
+              "value": "SEO Agent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "h4i33l2k-9k6h-ah1i-f56g-789012345ghi",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": "YOUR_GOOGLE_SHEETS_ID",
+        "sheetName": "SEO Keywords",
+        "columnToMatchOn": "A",
+        "dataMode": "define",
+        "fieldsUi": {
+          "values": [
+            {
+              "fieldId": "A",
+              "fieldValue": "={{ $json.seed_keyword }}"
+            },
+            {
+              "fieldId": "B",
+              "fieldValue": "={{ $json.total_keywords }}"
+            },
+            {
+              "fieldId": "C",
+              "fieldValue": "={{ $json.processing_time }}"
+            },
+            {
+              "fieldId": "D",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "E",
+              "fieldValue": "={{ $json.keywords[0].keyword }}"
+            },
+            {
+              "fieldId": "F",
+              "fieldValue": "={{ $json.keywords[0].opportunity_score }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "i5j44m3l-0l7i-bi2j-g67h-890123456hij",
+      "name": "Google Sheets Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Keyword research failed or returned no results",
+        "options": {}
+      },
+      "id": "j6k55n4m-1m8j-cj3k-h78i-901234567ijk",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [900, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/batch-research",
+        "authentication": "none",
+        "requestFormat": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "seed_keywords",
+              "value": "={{ $json.seed_keywords || ['digital marketing', 'content strategy', 'seo optimization'] }}"
+            },
+            {
+              "name": "max_keywords_each",
+              "value": "={{ $json.max_keywords_each || 25 }}"
+            },
+            {
+              "name": "country",
+              "value": "={{ $json.country || 'US' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "k7l66o5n-2n9k-dk4l-i89j-012345678jkl",
+      "name": "Batch Research API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [460, 600]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Process batch results into individual keyword reports\nconst batchResults = $input.first().json;\nconst processedResults = [];\n\nObject.keys(batchResults).forEach(seedKeyword => {\n  const result = batchResults[seedKeyword];\n  if (result.keywords && result.keywords.length > 0) {\n    processedResults.push({\n      seed_keyword: seedKeyword,\n      total_keywords: result.total_keywords,\n      processing_time: result.processing_time,\n      keywords: result.keywords,\n      timestamp: new Date().toISOString()\n    });\n  }\n});\n\nreturn processedResults.map(result => ({ json: result }));"
+      },
+      "id": "l8m77p6o-3o0l-el5m-j90k-123456789klm",
+      "name": "Process Batch Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 600]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "23456789-01bc-def2-3456-789012345678",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "batch",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "m9n88q7p-4p1m-fm6n-k01l-234567890lmn",
+      "name": "Check Processing Mode",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 450]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Check Processing Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Keyword Research API": {
+      "main": [
+        [
+          {
+            "node": "Check Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Results": {
+      "main": [
+        [
+          {
+            "node": "Prepare CSV Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare CSV Data": {
+      "main": [
+        [
+          {
+            "node": "Convert to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to CSV": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Research API": {
+      "main": [
+        [
+          {
+            "node": "Process Batch Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Batch Results": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Processing Mode": {
+      "main": [
+        [
+          {
+            "node": "Batch Research API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SEO Keyword Research API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "id": "seo",
+      "name": "SEO"
+    },
+    {
+      "id": "keywords",
+      "name": "Keywords"
+    },
+    {
+      "id": "ai",
+      "name": "AI"
+    },
+    {
+      "id": "automation",
+      "name": "Automation"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
